@@ -67,7 +67,8 @@ class epoll {
         if (event & WR) epev.events |= EPOLLOUT;
 
         if (epoll_ctl(epfd, op, fd, &epev) == -1) {
-            std::cerr << "epoll_ctl error\n";
+            std::cerr << "epoll_ctl error:";
+            std::perror("");
             return -1;
         }
         events[fd] = event & RDWR;
@@ -93,7 +94,8 @@ class epoll {
         if (event & WR) epev.events |= EPOLLOUT;
 
         if (epoll_ctl(epfd, op, fd, &epev) == -1) {
-            std::cerr << "epoll_ctl error\n";
+            std::cerr << "epoll_ctl error:";
+            std::perror("");
             return -1;
         }
 

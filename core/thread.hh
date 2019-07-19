@@ -69,10 +69,10 @@ class thread_pool {
         }
     }
 
-    template <typename F, typename... Rest>
-    decltype(auto) push(F &&f, Rest &&... rest) {
-        auto tsk = std::make_shared<std::packaged_task<decltype(f(rest...))()>>(
-            [f, rest...]() { f(rest...); });
+    template <typename F, typename... Args>
+    decltype(auto) push(F &&f, Args &&... args) {
+        auto tsk = std::make_shared<std::packaged_task<decltype(f(args...))()>>(
+            [f, args...]() { f(args...); });
 
         taskQue.push(new Task([tsk]() { (*tsk)(); }));
 

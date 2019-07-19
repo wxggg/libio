@@ -29,6 +29,8 @@ class reactor {
 
     std::vector<int> needclean;
 
+    bool terminated = false;
+
    public:
     reactor() {
         timeManager = new wxg::time;
@@ -43,40 +45,52 @@ class reactor {
     int size() const { return channels.size(); }
     void clear() { channels.clear(); }
 
+    void set_terminated() { terminated = true; }
+
    public:
     wxg::time *get_time_manager() const { return timeManager; }
 
-    template <typename F, typename... Rest>
-    void set_read_handler(int fd, F &&f, Rest &&... rest) {
-        if (fd < 0) return;
-        if (!channels.count(fd)) {
-            channels[fd] = new channel;
-            channels[fd]->fd = fd;
-            io->add(fd, io->RD);
-            add_read(fd);
-        }
-        channels[fd]->readcb = [f, rest...]() { f(rest...); };
+    template <typename F, typename... Args>
+    int set_timer(int sec, F &&f, Args &&... args) {
+        return timeManager->set_timer(sec, f, args...);
     }
 
-    template <typename F, typename... Rest>
-    void set_write_handler(int fd, F &&f, Rest &&... rest) {
+    template <typename F, typename... Args>
+    void set_read_handler(int fd, F &&f, Args &&... args) {
         if (fd < 0) return;
         if (!channels.count(fd)) {
             channels[fd] = new channel;
             channels[fd]->fd = fd;
-            add_write(fd);
         }
-        channels[fd]->writecb = [f, rest...]() { f(rest...); };
+        add_read(fd);
+        channels[fd]->readcb = [f, &args...]() {
+            f(std::forward<decltype(args)>(args)...);
+        };
     }
 
-    template <typename F, typename... Rest>
-    void set_error_handler(int fd, F &&f, Rest &&... rest) {
+    template <typename F, typename... Args>
+    void set_write_handler(int fd, F &&f, Args &&... args) {
         if (fd < 0) return;
         if (!channels.count(fd)) {
             channels[fd] = new channel;
             channels[fd]->fd = fd;
         }
-        channels[fd]->errorcb = [f, rest...]() { f(rest...); };
+        add_write(fd);
+        channels[fd]->writecb = [f, &args...]() {
+            f(std::forward<decltype(args)>(args)...);
+        };
+    }
+
+    template <typename F, typename... Args>
+    void set_error_handler(int fd, F &&f, Args &&... args) {
+        if (fd < 0) return;
+        if (!channels.count(fd)) {
+            channels[fd] = new channel;
+            channels[fd]->fd = fd;
+        }
+        channels[fd]->errorcb = [f, &args...]() {
+            f(std::forward<Args>(args)...);
+        };
     }
 
     void remove_read_handler(int fd) {
@@ -124,7 +138,6 @@ class reactor {
 
             if (res == -1) {
                 std::cerr << "listen error res = -1" << std::endl;
-                return;
             }
 
             timeManager->process();
@@ -145,7 +158,7 @@ class reactor {
             }
             std::vector<int>().swap(needclean);
 
-            if (once) return;
+            if (once || terminated) return;
         }
     }
 };

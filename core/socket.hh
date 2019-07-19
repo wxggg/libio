@@ -20,13 +20,13 @@ using std::endl;
 
 namespace wxg {
 
-int write(int fd, std::string &str) {
+inline int write(int fd, const std::string &str) {
     int n = ::write(fd, str.c_str(), str.length());
     if (n < 0) cerr << " error write n < 0" << endl;
     return n;
 }
 
-int create_eventfd() {
+inline int create_eventfd() {
     int fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
     if (fd < 0) {
         cerr << __func__ << " error eventfd\n";
@@ -35,7 +35,7 @@ int create_eventfd() {
     return fd;
 }
 
-int set_nonblock(int fd) {
+inline int set_nonblock(int fd) {
     if (fd < 0) {
         cerr << __func__ << " error fd < 0" << endl;
         return -1;
@@ -54,7 +54,7 @@ int set_nonblock(int fd) {
     return 0;
 }
 
-std::pair<int, int> get_socketpair() {
+inline std::pair<int, int> get_socketpair() {
     int fdpair[2];
     fdpair[0] = fdpair[1] = -1;
     if (::socketpair(AF_UNIX, SOCK_STREAM, 0, fdpair) == -1)
@@ -63,7 +63,7 @@ std::pair<int, int> get_socketpair() {
     return std::make_pair(fdpair[0], fdpair[1]);
 }
 
-int check_socket(int fd) {
+inline int check_socket(int fd) {
     int error = 0;
     if (::getsockopt(fd, SOL_SOCKET, SO_ERROR, &error,
                      (socklen_t *)sizeof(error)) == -1) {

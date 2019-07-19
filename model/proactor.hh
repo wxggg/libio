@@ -43,13 +43,13 @@ class proactor {
     }
     ~proactor() {}
 
-    template <typename F, typename... Rest>
-    void async_accept(int socket, F &&f, Rest &&... rest) {
-        async_read(socket, f, rest...);
+    template <typename F, typename... Args>
+    void async_accept(int socket, F &&f, Args &&... args) {
+        async_read(socket, f, args...);
     }
 
-    template <typename F, typename... Rest>
-    void async_write(int socket, F &&f, Rest &&... rest) {
+    template <typename F, typename... Args>
+    void async_write(int socket, F &&f, Args &&... args) {
         cout << "write handler " << socket << endl;
         if (socket < 0) return;
 
@@ -57,7 +57,7 @@ class proactor {
 
         init_descriptor(socket);
 
-        ops[socket]->write_queue.push([f, rest...]() { f(rest...); });
+        ops[socket]->write_queue.push([f, args...]() { f(args...); });
 
         task_->set_write_handler(socket, [this, socket]() {
             if (!ops.count(socket)) return;
@@ -76,15 +76,15 @@ class proactor {
         });
     }
 
-    template <typename F, typename... Rest>
-    void async_read(int socket, F &&f, Rest &&... rest) {
+    template <typename F, typename... Args>
+    void async_read(int socket, F &&f, Args &&... args) {
         if (socket < 0) return;
 
         Lock lock(mutex);
 
         init_descriptor(socket);
 
-        ops[socket]->read_queue.push([f, rest...]() { f(rest...); });
+        ops[socket]->read_queue.push([f, args...]() { f(args...); });
 
         task_->set_read_handler(socket, [this, socket]() {
             cout << "read handler " << socket << endl;

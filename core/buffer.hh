@@ -28,15 +28,16 @@ class buffer {
     }
     ~buffer() { delete originbuf_; }
 
+    bool empty() const { return off_ == 0; }
     unsigned char *get() const { return buf_; }
-    int length() const { return off_; }
+    size_t length() const { return off_; }
 
     void clear() {
         misalign_ = off_ = 0;
         buf_ = originbuf_;
     }
 
-    int read(int fd, int count) {
+    int read(int fd, int count = -1) {
         if (count < 0 || count > MAX_READ) count = MAX_READ;
 
         if (__expand(count) == -1) return -1;
@@ -50,8 +51,6 @@ class buffer {
         if (misalign_ + off_ < totallen_) buf_[off_] = '\0';
         return n;
     }
-
-    int read(int fd) { return read(fd, -1); }
 
     int write(int fd) {
         int n = ::write(fd, buf_, off_);
@@ -72,8 +71,9 @@ class buffer {
         return 0;
     }
 
-    int push(buffer *input, int length) {
+    int push(buffer *input, int length = -1) {
         if (!input) return 0;
+        if (length == -1) length = input->length();
         if (length > input->off_ || length < 0) length = input->off_;
 
         int res = push(input->buf_, length);
@@ -93,13 +93,14 @@ class buffer {
 
         if (length > 0) __drain(length);
 
+        if (misalign_ + off_ < totallen_) buf_[off_] = '\0';
         return length;
     }
 
     /**
      * string line end with '\r\n' '\n\r' '\r' '\n'
      */
-    std::string pop_line() {
+    std::string pop() {
         char *data = (char *)buf_;
         int i;
 
@@ -135,6 +136,7 @@ class buffer {
             search = p + 1;
             remain = off_ - (int)(search - buf_);
         }
+
 
         return nullptr;
     }

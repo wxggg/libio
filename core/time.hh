@@ -66,13 +66,18 @@ class time {
         idtimer[id]->persistent = true;
     }
 
-    template <typename F, typename... Rest>
-    int set_timer(int sec, int usec, F &&f, Rest &&... rest) {
-        return set_timer(sec, usec, false, f, rest...);
+    template <typename F, typename... Args>
+    int set_timer(int sec, F &&f, Args &&... args) {
+        return set_timer(sec, 0, false, f, args...);
     }
 
-    template <typename F, typename... Rest>
-    int set_timer(int sec, int usec, bool persistent, F &&f, Rest &&... rest) {
+    template <typename F, typename... Args>
+    int set_timer(int sec, int usec, F &&f, Args &&... args) {
+        return set_timer(sec, usec, false, f, args...);
+    }
+
+    template <typename F, typename... Args>
+    int set_timer(int sec, int usec, bool persistent, F &&f, Args &&... args) {
         int id = __get_id();
         auto ti = new timer;
         idtimer[id] = ti;
@@ -87,7 +92,7 @@ class time {
         timeradd(&now, &ti->tv, &ti->timeout);
 
         ti->persistent = persistent;
-        ti->callback = [f, rest...]() { f(rest...); };
+        ti->callback = [f, args...]() { f(args...); };
 
         timers.insert(ti);
 

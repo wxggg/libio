@@ -1,17 +1,17 @@
 # libio
 A  simple io interface for linux network programing, containing multiple IO model.
 
-LinuxÆ½Ì¨¼òµ¥IOÍøÂç¿â,·â×°¶àÖÖioÄ£ĞÍ,°üÀ¨reactor,¶àÏß³Ìreactor,¶à½ø³Ìreactor(master-worker),proactorÄ£ĞÍ.
+Linuxå¹³å°ç®€å•IOç½‘ç»œåº“,å°è£…å¤šç§ioæ¨¡å‹,åŒ…æ‹¬reactor,å¤šçº¿ç¨‹reactor,å¤šè¿›ç¨‹reactor(master-worker),proactoræ¨¡å‹.
 
-## ÌØµã
+## ç‰¹ç‚¹
 
-ÄÚÖÃ¶àÖÖ»ù±¾×é¼ş,°üÀ¨»º³åÇø,¶¨Ê±Æ÷,¶àÖÖio¶àÂ·¸´ÓÃ»úÖÆ,Ïß³Ì³Ø,ĞÅºÅ¹ÜÀí
+å†…ç½®å¤šç§åŸºæœ¬ç»„ä»¶,åŒ…æ‹¬ç¼“å†²åŒº,å®šæ—¶å™¨,å¤šç§ioå¤šè·¯å¤ç”¨æœºåˆ¶,çº¿ç¨‹æ± ,ä¿¡å·ç®¡ç†
 
 ## example
 
-ÒÔ echo serverÎªÀı, ·â×°¶àÖÖIOÄ£ĞÍ
+ä»¥ echo serverä¸ºä¾‹, å°è£…å¤šç§IOæ¨¡å‹
 
-__1. ¶àÏß³ÌreactorÄ£ĞÍ__
+__1. å¤šçº¿ç¨‹reactoræ¨¡å‹__
 ```c++
 #include <core/epoll.hh>
 #include <model/thread_loop.hh>
@@ -37,9 +37,9 @@ void test_thread_loop() {
 }
 ```
 
-__2. ¶à½ø³ÌreactorÄ£ĞÍ (master-worker¹¤×÷Ä£Ê½)__
+__2. å¤šè¿›ç¨‹reactoræ¨¡å‹ (master-workerå·¥ä½œæ¨¡å¼)__
 
-·ÂnginxÊµÏÖmaster/workerÄ£ĞÍ
+ä»¿nginxå®ç°master/workeræ¨¡å‹
 ```c++
 #include <core/epoll.hh>
 #include <model/process_loop.hh>
@@ -65,9 +65,9 @@ void test_process_loop() {
 }
 ```
 
-__3. proactorÄ£ĞÍ__
+__3. proactoræ¨¡å‹__
 
-·Âasio¿âÊµÏÖproactorÄ£ĞÍ,»ùÓÚreactorÄ£ĞÍ½èÖúÏß³Ì³ØÄ£ÄâproactorÒì²½io.
+ä»¿asioåº“å®ç°proactoræ¨¡å‹,åŸºäºreactoræ¨¡å‹å€ŸåŠ©çº¿ç¨‹æ± æ¨¡æ‹Ÿproactorå¼‚æ­¥io.
 
 ```c++
 #include <core/epoll.hh>

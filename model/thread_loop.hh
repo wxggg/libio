@@ -14,9 +14,9 @@ namespace wxg {
 struct thread_info {
     int id = 0;
     int wakeupfd = -1;
-    std::unique_ptr<reactor<wxg::epoll>> re = nullptr;
+    std::unique_ptr<reactor<epoll>> re = nullptr;
 
-    thread_info(int i) : id(i) { re = std::make_unique<reactor<wxg::epoll>>(); }
+    thread_info(int i) : id(i) { re = std::make_unique<reactor<epoll>>(); }
 };
 
 struct client_info {

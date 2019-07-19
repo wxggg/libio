@@ -37,15 +37,15 @@ class signal {
         callback[sig].second = false;
     }
 
-    template <typename F, typename... Rest>
-    static void set_handler(int sig, F&& f, Rest&&... rest) {
-        set_handler(sig, false, f, rest...);
+    template <typename F, typename... Args>
+    static void set_handler(int sig, F&& f, Args&&... args) {
+        set_handler(sig, false, f, args...);
     }
 
-    template <typename F, typename... Rest>
-    static void set_handler(int sig, bool persistent, F&& f, Rest&&... rest) {
+    template <typename F, typename... Args>
+    static void set_handler(int sig, bool persistent, F&& f, Args&&... args) {
         callback[sig] =
-            std::make_pair([f, rest...]() { f(rest...); }, persistent);
+            std::make_pair([f, args...]() { f(args...); }, persistent);
 
         sigaddset(&sigmask, sig);
         sa.sa_mask = sigmask;
