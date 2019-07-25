@@ -21,6 +21,7 @@ int main(int argc, char const *argv[]) {
             if (!req->get_header("X-Negative").empty())
                 r.set_header("Content-Length", "-100");
             conn->send_request(&r);
+            cout << "out buffer:" << conn->get_write_buffer()->length() << endl;
         });
 
     server.set_request_handler(

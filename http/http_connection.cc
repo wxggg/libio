@@ -9,7 +9,7 @@ namespace wxg {
 http_connection::http_connection(http_thread* _thread, int _fd,
                                  const std::string& _addr, unsigned short _port)
     : thread(_thread), fd(_fd), address(_addr), port(_port) {
-    closed = false;
+    status = CONNECTED;
 
     in = std::make_unique<buffer>();
     out = std::make_unique<buffer>();
@@ -19,6 +19,16 @@ http_connection::http_connection(http_thread* _thread, int _fd,
         exit(-1);
     }
 
+    init();
+}
+
+http_connection::~http_connection() { close(); }
+
+/*
+ * when init a connection, the handler should be set
+ * when reuse a connection, need to init again, because fd changed
+ */
+void http_connection::init() {
     get_reactor()->set_read_handler(fd, [this]() {
         int n = in->read(fd);
 
@@ -29,6 +39,7 @@ http_connection::http_connection(http_thread* _thread, int _fd,
             }
         } else if (n == 0) {  // EOF
             get_reactor()->remove_read(fd);
+            status = CLOSING;
         } else {
             parse_request();
         }
@@ -38,7 +49,7 @@ http_connection::http_connection(http_thread* _thread, int _fd,
     get_reactor()->set_write_handler(fd, [this]() {
         if (out->empty()) {
             get_reactor()->remove_write(fd);
-            if (closed) close();
+            if (status == CLOSING) close();
             return;
         }
 
@@ -47,27 +58,25 @@ http_connection::http_connection(http_thread* _thread, int _fd,
             if (errno != EAGAIN && errno != EINTR && errno != EINPROGRESS) {
                 cerr << "fixme: write error" << endl;
                 get_reactor()->remove_write(fd);
+                status = CLOSING;
             }
         } else if (n == 0) {
             cerr << "error write eof" << endl;
             get_reactor()->remove_write(fd);
+            status = CLOSING;
         } else {
-            cout << "write " << n << " bytes" << endl;
         }
     });
     get_reactor()->remove_write(fd);
 }
-
-http_connection::~http_connection() {}
 
 reactor<epoll>* http_connection::get_reactor() const {
     return thread->get_reactor();
 }
 
 void http_connection::parse_request() {
-    cout << __func__ << endl;
     if (in->empty()) {
-        if (!closed) get_reactor()->add_read(fd);
+        if (status == CONNECTED) get_reactor()->add_read(fd);
         return;
     }
 
@@ -95,7 +104,7 @@ void http_connection::parse_request() {
                 cerr << "corrupted" << endl;
                 shutdown(fd, SHUT_RD);
                 get_reactor()->remove_read_handler(fd);
-                closed = true;
+                status = CLOSING;
                 send_reply(HTTP_BADREQUEST, "bad request", "400 Bad Request");
                 break;
             case CANCELD:
@@ -103,6 +112,7 @@ void http_connection::parse_request() {
                 cerr << "unknow error" << endl;
                 shutdown(fd, SHUT_RD);
                 get_reactor()->remove_read_handler(fd);
+                status = CLOSING;
                 break;
         }
         if (!out->empty()) get_reactor()->add_write(fd);
@@ -153,23 +163,27 @@ void http_connection::send_chunk_end() {
 
 void http_connection::close() {
     if (fd > 0) {
+        get_reactor()->erase(fd);
         shutdown(fd, SHUT_WR);
         ::close(fd);
+
+        thread->release_connection(fd);
         fd = -1;
-        get_reactor()->remove_read_handler(fd);
-        get_reactor()->remove_write_handler(fd);
-        cout << "connection close" << endl;
+
+        get_write_buffer()->clear();
+        get_read_buffer()->clear();
+        status = CLOSED;
+        std::queue<std::unique_ptr<request>>().swap(requests);
     }
 }
 
 void http_connection::handle_request(request* req) {
     if (!req) return;
-    cout << __func__ << " uri=" << req->uri << endl;
 
     if (req->get_header("Connection") == "close") {
         shutdown(fd, SHUT_RD);
         get_reactor()->remove_read_handler(fd);
-        closed = true;
+        status = CLOSING;
     }
 
     auto server = thread->get_server();

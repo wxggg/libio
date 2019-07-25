@@ -20,21 +20,43 @@ http_thread::http_thread(http_multithread_server* server) : server_(server) {
     }
 
     reactor_->set_read_handler(wakeupfd, [this]() {
-        char ch[32];
+        if (clientQueue.empty()) return;
+        char ch[8];
         ::read(wakeupfd, ch, sizeof(ch));
-        if (ch[0] != '0' || ch[1] != 'x')
-            cout << "warning eventfd receive wrong msg" << endl;
 
         pair<int, pair<string, unsigned short>> cinfo;
-        while (this->server_->clientQueue.pop(cinfo)) {
-            auto conn = std::make_unique<http_connection>(
-                this, cinfo.first, cinfo.second.first, cinfo.second.second);
-
+        while (clientQueue.pop(cinfo)) {
+            auto conn = make_connection(cinfo.first, cinfo.second.first,
+                                        cinfo.second.second);
             conn->parse_request();
-
-            this->connections.push_back(std::move(conn));
+            hashConnections[cinfo.first] = std::move(conn);
         }
     });
+}
+
+void http_thread::release_connection(int fd) {
+    auto it = hashConnections.find(fd);
+    if (it != hashConnections.end()) {
+        emptyConnections.push(std::move(it->second));
+        hashConnections.erase(it);
+    }
+}
+
+std::unique_ptr<http_connection> http_thread::make_connection(
+    int fd, const std::string& addr, unsigned short port) {
+    if (emptyConnections.empty())
+        return std::make_unique<http_connection>(this, fd, addr, port);
+
+    auto conn = std::move(emptyConnections.front());
+    emptyConnections.pop();
+
+    conn->thread = this;
+    conn->fd = fd;
+    conn->address = addr;
+    conn->port = port;
+    conn->status = CONNECTED;
+    conn->init();
+    return conn;
 }
 
 }  // namespace wxg

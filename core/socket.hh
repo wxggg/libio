@@ -21,9 +21,7 @@ using std::endl;
 namespace wxg {
 
 inline int write(int fd, const std::string &str) {
-    int n = ::write(fd, str.c_str(), str.length());
-    if (n < 0) cerr << " error write n < 0" << endl;
-    return n;
+    return ::write(fd, str.c_str(), str.length());
 }
 
 inline int create_eventfd() {
@@ -184,6 +182,14 @@ class tcp {
         host = std::string(ntop);
         port = std::stoi(strport);
         return sockfd;
+    }
+
+    static int connect(const std::string &address, unsigned short port) {
+        int fd = get_socket();
+        if (connect(fd, address, port) != -1) return fd;
+
+        close(fd);
+        return -1;
     }
 
     static int connect(int fd, const std::string &address,

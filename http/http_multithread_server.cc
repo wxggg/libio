@@ -30,11 +30,12 @@ void http_multithread_server::start(const std::string &address,
         int clientfd = tcp::accept(fd, addr, port);
         if (clientfd <= 0) return;
 
-        std::cout << "client " << addr << ":" << port << std::endl;
-        this->clientQueue.push(
+        threads[index]->clientQueue.push(
             std::make_pair(clientfd, std::make_pair(addr, port)));
 
-        wakeup_random(2);
+        threads[index]->wakeup();
+
+        index = (index + 1) % size;
     });
 
     for (int i = 0; i < size; i++)

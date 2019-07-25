@@ -106,7 +106,7 @@ class http_client {
     }
 
     void set_read(wxg::request *req = nullptr) {
-        reactor_->set_read_handler(fd, [&]() {
+        reactor_->set_read_handler(fd, [=]() {
             int n = buffer_read(in.get(), fd, reactor_.get());
             if (n > 0 && req && req->parse(get_in()) != wxg::NEEDMORE)
                 get_reactor()->remove_read_handler(fd);
@@ -124,7 +124,7 @@ class http_client {
 
 void http_basic_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::request req;
     req.set_request(wxg::GET, "/test");
@@ -145,7 +145,7 @@ void http_basic_test(void) {
 
 void http_connection_test(bool persistent) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::request req;
     req.set_request(wxg::GET, "/test");
@@ -166,7 +166,7 @@ void http_connection_test(bool persistent) {
 
 void http_close_detection(bool withdelay) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     string uri = "/test";
     if (withdelay) uri = "/largedelay";
@@ -202,7 +202,7 @@ void http_close_detection(bool withdelay) {
 
 void http_post_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::buffer content;
     content.push("message from client");
@@ -226,7 +226,7 @@ void http_post_test(void) {
 
 void http_failure_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     client.get_out()->push("illegal request\r\n");
 
@@ -255,7 +255,7 @@ void http_failure_test(void) {
 
 void http_dispatcher_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::request req;
     req.set_request(wxg::GET, "/dispatch?arg=");
@@ -276,7 +276,7 @@ void http_dispatcher_test(void) {
 
 void http_multiline_header_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     const string http_start_request =
         "GET /test HTTP/1.1\r\n"
@@ -305,7 +305,7 @@ void http_multiline_header_test(void) {
 
 void http_negtive_content_length_test() {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::request req;
     req.set_request(wxg::GET, "/test");
@@ -323,7 +323,7 @@ void http_negtive_content_length_test() {
 
 void http_chunked_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     wxg::request req;
     req.set_request(wxg::GET, "/chunked");
@@ -343,7 +343,7 @@ void http_chunked_test(void) {
 
 void http_keepalive_pipeline_test(void) {
     cout << __func__ << endl;
-    http_client client("127.0.0.1", 8082);
+    http_client client(address, port);
 
     for (int i = 0; i < 20; i++) {
         wxg::request req;

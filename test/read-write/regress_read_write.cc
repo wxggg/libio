@@ -212,7 +212,7 @@ void test_buffer_combined_read_write() {
 
     static auto fdpair = wxg::get_socketpair();
 
-    int n1 = 8192, n2 = 4096;
+    size_t n1 = 8192, n2 = 4096;
     char buf1[n1], buf2[n2];
 
     wxg::buffer writebuf1, writebuf2;

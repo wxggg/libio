@@ -25,10 +25,11 @@ class http_multithread_server {
 
     std::vector<std::unique_ptr<http_thread>> threads;
     int size = 2;
+    int index = 0;
 
    public:
     /* <fd, <address, port>> */
-    lock_queue<pair<int, pair<string, unsigned short>>> clientQueue;
+    // lock_queue<pair<int, pair<string, unsigned short>>> clientQueue;
 
     std::map<string, RequestHandler> requestHandlers;
     RequestHandler generalHandler;

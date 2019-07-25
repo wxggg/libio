@@ -4,7 +4,7 @@
 #include <sys/resource.h>
 
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace wxg {
@@ -12,12 +12,12 @@ namespace wxg {
 class epoll {
    private:
     int epfd;
-    std::map<int, int> events;  // read/write events set
+    std::unordered_map<int, int> events;  // read/write events set
 
     struct epoll_event *epevents;
     int size;
     int res;
-    std::map<int, int> result;
+    std::unordered_map<int, int> result;
     std::vector<int> activeFd;
 
    public:
@@ -111,7 +111,7 @@ class epoll {
         res = epoll_wait(epfd, epevents, size, timeout);
         if (res == -1) return -1;
 
-        std::map<int, int>().swap(result);
+        std::unordered_map<int, int>().swap(result);
         std::vector<int>().swap(activeFd);
 
         int event, what, fd;

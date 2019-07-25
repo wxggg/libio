@@ -7,6 +7,19 @@ Linux平台简单IO网络库,封装多种io模型,包括reactor,多线程reactor
 
 内置多种基本组件,包括缓冲区,定时器,多种io多路复用机制,线程池,信号管理
 
+* IO复用：select、poll、epoll
+* 线程池
+* RAII管理资源
+* HTTP: 支持1.0/1.1协议，长短连接，管线化传输请求，优雅关闭连接，数据分块传输
+* 使用连接池，避免反复申请内存
+* 多种IO模型：多线程reactor、多进程master-worker、proactor
+
+## 压测
+
+内置两种压测工具，bench/bench.cc（击鼓传花读写测试），bench/mywebbench.cc（类webbench并发压测工具）
+
+实测并发性能接近 Nginx 和 muduo 的60%，还需要继续优化
+
 ## example
 
 以 echo server为例, 封装多种IO模型

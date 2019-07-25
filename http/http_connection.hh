@@ -11,9 +11,15 @@
 
 namespace wxg {
 
+enum connection_status_t { CONNECTED = 0, CLOSING, CLOSED };
+
 class http_thread;
 class http_connection {
    private:
+    std::unique_ptr<buffer> in = nullptr;
+    std::unique_ptr<buffer> out = nullptr;
+
+   public:
     http_thread* thread = nullptr;
     int fd = -1;
     std::string address;
@@ -21,15 +27,14 @@ class http_connection {
 
     std::queue<std::unique_ptr<request>> requests;
 
-    std::unique_ptr<buffer> in = nullptr;
-    std::unique_ptr<buffer> out = nullptr;
-
-    bool closed;
+    connection_status_t status = CLOSED;
 
    public:
     http_connection(http_thread* thread, int _fd, const std::string& _addr,
                     unsigned short _port);
     ~http_connection();
+
+    void init();
 
     reactor<epoll>* get_reactor() const;
     wxg::buffer* get_read_buffer() const { return in.get(); }

@@ -263,7 +263,7 @@ int main(int argc, char const *argv[]) {
 
     // test_read_write();
 
-    // test_reactor();
+    test_reactor();
 
     // test_weof();
 
@@ -273,7 +273,7 @@ int main(int argc, char const *argv[]) {
 
     // test_process_loop();
 
-    test_proactor();
+    // test_proactor();
 
     return 0;
 }

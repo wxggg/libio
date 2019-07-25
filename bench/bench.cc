@@ -35,6 +35,7 @@ void readcb(int i) {
 }
 
 int run_once() {
+    cout << __func__ << endl;
     countread = fired = 0, writes = num_writes;
 
     int space = num_pipes / num_active;
@@ -42,8 +43,9 @@ int run_once() {
 
     re.loop(true, true);
 
-    for (int i = 0; i < num_active; i++, fired++)
+    for (int i = 0; i < num_active; i++, fired++) {
         write(pipes[i * space + 1], "a", 1);
+    }
 
     auto t1 = Clock::now();
 
@@ -101,7 +103,7 @@ int main(int argc, char *const argv[]) {
             cerr << "error pipe errno=" << errno << endl;
             exit(-1);
         }
-        re.set_read_handler(pipes[2 * i], readcb, i);
+        re.set_read_handler(pipes[2 * i], [=]() { readcb(i); });
     }
 
     for (int i = 0; i < 25; i++) cout << run_once() << endl;
