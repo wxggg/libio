@@ -12,7 +12,7 @@ BASE_PATH =
 # Space-separated pkg-config libraries used by this project
 LIBS = # -levent++ -L$(BASE_PATH)
 # General compiler flags
-COMPILE_FLAGS = -std=c++14 -Wall -Wextra -g -Wno-unused-parameter -Wno-restrict -pthread
+COMPILE_FLAGS = -std=c++14 -Wall -O2 -Wextra -g -Wno-unused-parameter -Wno-restrict -pthread
 # Add additional include paths
 INCLUDES =-I..
 # General linker settings

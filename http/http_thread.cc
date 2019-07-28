@@ -28,7 +28,7 @@ http_thread::http_thread(http_multithread_server* server) : server_(server) {
         while (clientQueue.pop(cinfo)) {
             auto conn = make_connection(cinfo.first, cinfo.second.first,
                                         cinfo.second.second);
-            conn->parse_request();
+            get_reactor()->add_read(conn->fd);
             hashConnections[cinfo.first] = std::move(conn);
         }
     });

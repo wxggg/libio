@@ -52,6 +52,15 @@ inline int set_nonblock(int fd) {
     return 0;
 }
 
+inline int set_socket(int fd, int what) {
+    int on = 1;
+    if (::setsockopt(fd, SOL_SOCKET, what, &on, sizeof(on)) == -1) {
+        perror(__func__);
+        return -1;
+    }
+    return 0;
+}
+
 inline std::pair<int, int> get_socketpair() {
     int fdpair[2];
     fdpair[0] = fdpair[1] = -1;
@@ -78,6 +87,22 @@ inline int check_socket(int fd) {
 
 class tcp {
    public:
+    static int bind_and_listen(const std::string &address,
+                               unsigned short port) {
+        int fd = get_socket();
+        if (bind(fd, address, port) == -1) {
+            close(fd);
+            return -1;
+        }
+
+        if (listen(fd) == -1) {
+            close(fd);
+            return -1;
+        }
+
+        return fd;
+    }
+
     static int bind(int fd, const std::string &address, unsigned short port) {
         if (address.empty() || port == 0) return -1;
 
@@ -94,7 +119,7 @@ class tcp {
         }
 
         if (::bind(fd, aitop->ai_addr, aitop->ai_addrlen) == -1) {
-            cerr << "bind error" << endl;
+            perror(__func__);
             freeaddrinfo(aitop);
             return -1;
         }
@@ -125,7 +150,7 @@ class tcp {
         addr.sin_port = htons(port);
 
         if (::bind(fd, (const sockaddr *)&addr, sizeof(addr)) < 0) {
-            cerr << "bind error" << endl;
+            perror(__func__);
             return -1;
         }
 
@@ -137,7 +162,10 @@ class tcp {
             cerr << "error fd == -1" << endl;
             exit(-1);
         }
-        if (::listen(fd, 128) < 0) return -1;
+        if (::listen(fd, 128) < 0) {
+            perror(__func__);
+            return -1;
+        }
         return 0;
     }
 
@@ -150,7 +178,7 @@ class tcp {
         socklen_t clilen = sizeof(cliaddr);
         int connfd = ::accept(fd, (sockaddr *)&cliaddr, &clilen);
         if (connfd < 0) {
-            cerr << "accept error" << endl;
+            perror(__func__);
             return -1;
         }
 
@@ -164,8 +192,7 @@ class tcp {
             ::accept(fd, (struct sockaddr *)&ss_client, &client_addrlen);
 
         if (sockfd == -1) {
-            if (errno != EAGAIN && errno != EINTR)
-                cerr << "accept error with errno=" << errno << endl;
+            if (errno != EAGAIN && errno != EINTR) perror(__func__);
             return -1;
         }
 
@@ -186,10 +213,12 @@ class tcp {
 
     static int connect(const std::string &address, unsigned short port) {
         int fd = get_socket();
-        if (connect(fd, address, port) != -1) return fd;
+        if (connect(fd, address, port) == -1) {
+            close(fd);
+            return -1;
+        }
 
-        close(fd);
-        return -1;
+        return fd;
     }
 
     static int connect(int fd, const std::string &address,
@@ -199,7 +228,7 @@ class tcp {
         if (!aitop) return -1;
 
         if (::connect(fd, aitop->ai_addr, aitop->ai_addrlen) == -1) {
-            cerr << "connect error with errno=" << errno << endl;
+            perror(__func__);
             ::freeaddrinfo(aitop);
             return -1;
         }

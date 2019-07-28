@@ -34,7 +34,7 @@ void http_connection::init() {
 
         if (n == -1) {
             if (errno != EAGAIN && errno != EINTR) {
-                cerr << "fixme: read error" << endl;
+                perror("connection read");
                 get_reactor()->remove_read(fd);
             }
         } else if (n == 0) {  // EOF
