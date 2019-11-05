@@ -25,7 +25,7 @@ OBJECTS := $(SOURCES:.$(SRC_EXT)=.o)
 %.o: %.cc
 	$(CXX) -c $< $(COMPILE_FLAGS) $(LIBS) $(INCLUDES)
 
-all: http mywebbench bench 
+all: http mywebbench bench webserver
 
 http:
 	cd $(HTTP_PATH) && make
@@ -36,9 +36,11 @@ mywebbench: mywebbench.o ../http/request.o
 bench: bench.o
 	$(CXX) -o $@ $< $(COMPILE_FLAGS) $(LIBS) $(INCLUDES)
 
+webserver: webserver.o $(OBJECTS)
+	$(CXX) -o $@ $< $(OBJECTS) $(COMPILE_FLAGS) $(LIBS) $(INCLUDES)
 
 
 clean:
 	rm *.o
-	rm mywebbench bench 
+	rm mywebbench bench webserver
 	cd $(HTTP_PATH) && make clean

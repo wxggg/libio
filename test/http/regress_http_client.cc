@@ -367,7 +367,7 @@ void http_keepalive_pipeline_test(void) {
 }
 
 int main(int argc, char const *argv[]) {
-    http_basic_test();
+    for (int i = 0; i < 10; i++) http_basic_test();
 
     http_connection_test(false);
     // http_connection_test(true);  // keep alive

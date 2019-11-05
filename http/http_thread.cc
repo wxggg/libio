@@ -55,7 +55,7 @@ std::unique_ptr<http_connection> http_thread::make_connection(
     conn->address = addr;
     conn->port = port;
     conn->status = CONNECTED;
-    conn->init();
+    conn->setup_new_events();
     return conn;
 }
 

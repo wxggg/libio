@@ -1,6 +1,7 @@
 #pragma once
 
 #include <core/buffer.hh>
+#include <core/connection.hh>
 #include <core/epoll.hh>
 #include <model/reactor.hh>
 
@@ -14,16 +15,9 @@ namespace wxg {
 enum connection_status_t { CONNECTED = 0, CLOSING, CLOSED };
 
 class http_thread;
-class http_connection {
-   private:
-    std::unique_ptr<buffer> in = nullptr;
-    std::unique_ptr<buffer> out = nullptr;
-
+class http_connection : public connection {
    public:
     http_thread* thread = nullptr;
-    int fd = -1;
-    std::string address;
-    unsigned short port;
 
     std::queue<std::unique_ptr<request>> requests;
 
@@ -34,11 +28,9 @@ class http_connection {
                     unsigned short _port);
     ~http_connection();
 
-    void init();
+    void setup_new_events();
 
     reactor<epoll>* get_reactor() const;
-    wxg::buffer* get_read_buffer() const { return in.get(); }
-    wxg::buffer* get_write_buffer() const { return out.get(); }
 
     void parse_request();
 

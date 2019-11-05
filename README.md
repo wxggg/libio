@@ -1,6 +1,12 @@
 # libio: A high performance multithread C++ network library for linux.
 Linux平台高性能多线程网络库，封装多种IO组件及IO模型，封装HTTP模块， 能非常方便的编写高性能的webserver。
 
+## 示例
+
+* [击鼓传花性能测试工具 sample/bench.cc](sample/bench.cc)
+* [http性能压测工具 sample/mywebbench.cc](sample/mywebbench.cc)
+* [高性能webserver，可用于静态博客 sample/webserver.cc](sample/webserver.cc)
+
 ## 核心组件 core
 * _缓冲区buffer_：支持动态扩展，描述符读写
 * _IO多路复用_：封装select、poll及epoll，提供统一接口，为了接口统一，epoll只提供水平触发模式

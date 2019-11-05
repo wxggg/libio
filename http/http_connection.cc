@@ -8,18 +8,18 @@ namespace wxg {
 
 http_connection::http_connection(http_thread* _thread, int _fd,
                                  const std::string& _addr, unsigned short _port)
-    : thread(_thread), fd(_fd), address(_addr), port(_port) {
+    : thread(_thread) {
+    fd = _fd;
+    address = _addr;
+    port = _port;
     status = CONNECTED;
-
-    in = std::make_unique<buffer>();
-    out = std::make_unique<buffer>();
 
     if (!thread || fd <= 0) {
         cerr << __func__ << " : error" << endl;
         exit(-1);
     }
 
-    init();
+    setup_new_events();
 }
 
 http_connection::~http_connection() { close(); }
@@ -28,9 +28,9 @@ http_connection::~http_connection() { close(); }
  * when init a connection, the handler should be set
  * when reuse a connection, need to init again, because fd changed
  */
-void http_connection::init() {
+void http_connection::setup_new_events() {
     get_reactor()->set_read_handler(fd, [this]() {
-        int n = in->read(fd);
+        int n = read();
 
         if (n == -1) {
             if (errno != EAGAIN && errno != EINTR) {
@@ -47,13 +47,13 @@ void http_connection::init() {
     get_reactor()->remove_read(fd);
 
     get_reactor()->set_write_handler(fd, [this]() {
-        if (out->empty()) {
+        if (get_write_buffer()->empty()) {
             get_reactor()->remove_write(fd);
             if (status == CLOSING) close();
             return;
         }
 
-        int n = out->write(fd);
+        int n = write();
         if (n == -1) {
             if (errno != EAGAIN && errno != EINTR && errno != EINPROGRESS) {
                 cerr << "fixme: write error" << endl;
@@ -75,14 +75,14 @@ reactor<epoll>* http_connection::get_reactor() const {
 }
 
 void http_connection::parse_request() {
-    if (in->empty()) {
+    if (get_read_buffer()->empty()) {
         if (status == CONNECTED) get_reactor()->add_read(fd);
         return;
     }
 
     bool processing = true;
 
-    while (processing && !in->empty()) {
+    while (processing && !get_read_buffer()->empty()) {
         if (requests.empty()) {
             auto req = std::make_unique<request>();
             req->kind = REQUEST;
@@ -90,7 +90,7 @@ void http_connection::parse_request() {
         }
 
         processing = false;
-        parse_status_t res = requests.front()->parse(in.get());
+        parse_status_t res = requests.front()->parse(get_read_buffer());
         switch (res) {
             case ALLREAD:
                 handle_request(requests.front().get());
@@ -115,7 +115,7 @@ void http_connection::parse_request() {
                 status = CLOSING;
                 break;
         }
-        if (!out->empty()) get_reactor()->add_write(fd);
+        if (!get_write_buffer()->empty()) get_reactor()->add_write(fd);
     }
 }
 
@@ -135,7 +135,7 @@ void http_connection::send_reply(http_code_t code, const std::string& reason,
 }
 
 void http_connection::send_request(request* req) {
-    req->send_to(out.get());
+    req->send_to(get_write_buffer());
     get_reactor()->add_write(fd);
 }
 
@@ -150,14 +150,14 @@ void http_connection::send_chunk_start(http_code_t code,
 void http_connection::send_chunk(wxg::buffer* buf) {
     std::stringstream ss;
     ss << std::hex << buf->length();
-    out->push(ss.str() + "\r\n");
-    out->push(buf);
-    out->push("\r\n");
+    push(ss.str() + "\r\n");
+    push(buf);
+    push("\r\n");
     get_reactor()->add_write(fd);
 }
 
 void http_connection::send_chunk_end() {
-    out->push("0\r\n\r\n");
+    push("0\r\n\r\n");
     get_reactor()->add_write(fd);
 }
 

@@ -17,7 +17,6 @@ void http_multithread_server::init() {
 
 void http_multithread_server::start(const std::string &address,
                                     unsigned short port) {
-    cout << __func__ << endl;
     init();
 
     int fd = tcp::get_nonblock_socket();
@@ -41,7 +40,7 @@ void http_multithread_server::start(const std::string &address,
     for (int i = 0; i < size; i++)
         pool_->push([this, i]() { threads[i]->loop(); });
 
-    cout << "running..." << endl;
+    cout << "running on " << address << ":" << port << endl;
     reactor_->loop();
 }
 

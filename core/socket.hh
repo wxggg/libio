@@ -87,9 +87,8 @@ inline int check_socket(int fd) {
 
 class tcp {
    public:
-    static int bind_and_listen(const std::string &address,
+    static int bind_and_listen(int fd, const std::string &address,
                                unsigned short port) {
-        int fd = get_socket();
         if (bind(fd, address, port) == -1) {
             close(fd);
             return -1;
@@ -100,7 +99,7 @@ class tcp {
             return -1;
         }
 
-        return fd;
+        return 0;
     }
 
     static int bind(int fd, const std::string &address, unsigned short port) {
